@@ -1,6 +1,7 @@
 import pytest
 import types
 import inspect
+from conftest import Capturing
 
 try:
     import homework
@@ -46,10 +47,10 @@ def test_InfoMessage():
     info_message = homework.InfoMessage
     info_message_signature = inspect.signature(info_message)
     info_message_signature_list = list(info_message_signature.parameters)
-    for param in ['training_type', 'duration', 'distance', 'speed', 'calories']:
-        assert param in info_message_signature_list, (
+    for p in ['training_type', 'duration', 'distance', 'speed', 'calories']:
+        assert p in info_message_signature_list, (
             'У метода `__init__` класса `InfoMessage` должен быть '
-            f'параметр {param}.'
+            f'параметр {p}.'
         )
 
 
@@ -179,7 +180,9 @@ def test_Training_get_spent_calories(input_data):
     assert hasattr(training, 'get_spent_calories'), (
         'Создайте метод `get_spent_calories` в классе `Training`.'
     )
-    assert callable(training.get_spent_calories), '`get_spent_calories` должна быть функцией.'
+    assert callable(training.get_spent_calories), (
+        '`get_spent_calories` должна быть функцией.'
+    )
 
 
 def test_Training_show_training_info(monkeypatch):
@@ -204,7 +207,9 @@ def test_Training_show_training_info(monkeypatch):
 
 def test_Swimming():
     assert hasattr(homework, 'Swimming'), 'Создайте класс `Swimming`'
-    assert inspect.isclass(homework.Swimming), '`Swimming` должен быть классом.'
+    assert inspect.isclass(homework.Swimming), (
+        '`Swimming` должен быть классом.'
+    )
     assert issubclass(homework.Swimming, homework.Training), (
         'Класс `Swimming` должен наследоваться от класса `Training`.'
     )
@@ -298,7 +303,8 @@ def test_SportsWalking_get_spent_calories(input_data, expected):
         'должен возвращать значение типа`float`'
     )
     assert result == expected, (
-        'Проверьте формулу подсчёта потраченных калорий в классе `SportsWalking`'
+        'Проверьте формулу подсчёта потраченных '
+        'калорий в классе `SportsWalking`'
     )
 
 
@@ -345,4 +351,36 @@ def test_main():
     assert callable(homework.main), '`main` должна быть функцией.'
     assert isinstance(homework.main, types.FunctionType), (
         '`main` должна быть функцией.'
+    )
+
+
+@pytest.mark.parametrize('input_data, expected', [
+    (['SWM', [720, 1, 80, 25, 40]], [
+        'Тип тренировки: Swimming; '
+        'Длительность: 1.000 ч.; '
+        'Дистанция: 0.994 км; '
+        'Ср. скорость: 1.000 км/ч; '
+        'Потрачено ккал: 336.000.'
+    ]),
+    (['RUN', [1206, 12, 6]], [
+        'Тип тренировки: Running; '
+        'Длительность: 12.000 ч.; '
+        'Дистанция: 0.784 км; '
+        'Ср. скорость: 0.065 км/ч; '
+        'Потрачено ккал: -81.320.'
+    ]),
+    (['WLK', [9000, 1, 75, 180]], [
+        'Тип тренировки: SportsWalking; '
+        'Длительность: 1.000 ч.; '
+        'Дистанция: 5.850 км; '
+        'Ср. скорость: 5.850 км/ч; '
+        'Потрачено ккал: 157.500.'
+    ])
+])
+def test_main_output(input_data, expected):
+    with Capturing() as get_message_output:
+        training = homework.read_package(*input_data)
+        homework.main(training)
+    assert get_message_output == expected, (
+        'Метод `main` должен печатать результат в консоль.\n'
     )
